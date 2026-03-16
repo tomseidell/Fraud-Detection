@@ -1,6 +1,7 @@
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
+from pandas import DataFrame
 
 class Data:
     def __init__(self):
@@ -14,13 +15,14 @@ class Data:
         self.train_id_data = pd.read_csv(self.data_train_id_path)
         self.train_trans_data = pd.read_csv(self.data_train_trans_path)
 
-    def merge_csv_data(self):
+    def merge_csv_data(self) -> DataFrame:
         '''
         This merges both datasets loaded above
         '''
 
         df = pd.merge(self.train_trans_data, self.train_id_data, how="left", on="TransactionID") # left (trans) = dominant df, transaction id = identifier
         self.df = df
+        return df
 
     def perform_feature_engineering(self):
 
