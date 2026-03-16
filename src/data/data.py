@@ -2,11 +2,13 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 from pandas import DataFrame
+from pathlib import Path
 
 class Data:
     def __init__(self):
-        self.data_train_id_path = "../data/raw/train_identity.csv"
-        self.data_train_trans_path = "../data/raw/train_transaction.csv"
+        root = Path(__file__).parent.parent.parent 
+        self.data_train_id_path = root / "data" / "raw" / "train_identity.csv"
+        self.data_train_trans_path = root / "data" / "raw" / "train_transaction.csv"
 
     def load_csv_data(self):
         '''
