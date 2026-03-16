@@ -7,13 +7,18 @@ class Data:
         self.data_train_id_path = "../data/raw/train_identity.csv"
         self.data_train_trans_path = "../data/raw/train_transaction.csv"
 
-
     def load_csv_data(self):
+        '''
+        This function loads both our dataset files and saves them as class variables
+        '''
         self.train_id_data = pd.read_csv(self.data_train_id_path)
         self.train_trans_data = pd.read_csv(self.data_train_trans_path)
 
-
     def merge_csv_data(self):
+        '''
+        This merges both datasets loaded above
+        '''
+
         df = pd.merge(self.train_trans_data, self.train_id_data, how="left", on="TransactionID") # left (trans) = dominant df, transaction id = identifier
         self.df = df
 
@@ -78,6 +83,12 @@ class Data:
         label_encoding()
     
     def split_data(self):
+        '''
+        This method transforms the merged dataset into 3 subsets:
+        - train (70%)
+        - val (15%)
+        - test (15%)
+        '''
         y = self.df['isFraud']
         X = self.df.drop(columns=["isFraud"])
 
@@ -93,7 +104,6 @@ class Data:
         self.X_test = X_test
         self.y_test = y_test
 
-    
     def prepare_data(self):
         self.load_csv_data()
         self.merge_csv_data()
