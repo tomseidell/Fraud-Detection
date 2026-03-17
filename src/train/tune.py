@@ -7,7 +7,11 @@ from src.data.data import Data
 from sklearn.model_selection import cross_val_score
 import json
 
-
+"""
+In this file we will perform HyperParameter Tuning. In this case we decided to use optuna instead of GridSearch, to save time.
+We are optimizing based on the ROC-AUC Metric and want to maximise this. The best parameters found by the algorithm, will 
+be saved as a json file in the models folder
+"""
 
 
 # load the data
@@ -28,12 +32,12 @@ def objective(trial):
     }
 
 
-    model = XGBClassifier(**param) # init xgBoost with all parameters from above
+    model = XGBClassifier(**param) 
 
     score = cross_val_score(model, X_train, y_train, cv=3, scoring="roc_auc").mean() 
     """
-    cross_val takes our dataset X_train and splits it into subsets of train and test. for each cv iteration, the subsets both differ.
-    The Score is always relevative to the test subset and not the train subset
+    cross_val takes our dataset X_train and splits it into subsets of train and test. for each cv iteration, the subsets both differ from
+    before. The Score is always relevative to the test subset and not the train subset.
     """
 
     return score
@@ -46,5 +50,6 @@ study.optimize(objective, n_trials=50) # n_trials = number of trials -- trial am
 print(f"Best ROC-AUC: {study.best_value:.4f}")
 print(f"Best Params: {study.best_params}")
 
+# save model params in json fle
 with open("../../models/best_params.json", "w") as f:
     json.dump(study.best_params, f, indent=4) 
