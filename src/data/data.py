@@ -9,6 +9,9 @@ class Data:
         root = Path(__file__).parent.parent.parent 
         self.data_train_id_path = root / "data" / "raw" / "train_identity.csv"
         self.data_train_trans_path = root / "data" / "raw" / "train_transaction.csv"
+        self.data_test_id_path = root / "data" / "raw" / "test_identity.csv"
+        self.data_test_trans_path = root / "data" / "raw" / "test_transaction.csv"
+        self.label_encoders = {} # memory for label encoding 
 
     def load_csv_data(self):
         '''
@@ -16,6 +19,9 @@ class Data:
         '''
         self.train_id_data = pd.read_csv(self.data_train_id_path)
         self.train_trans_data = pd.read_csv(self.data_train_trans_path)
+        self.test_id_data = pd.read_csv(self.data_test_id_path)
+        self.test_trans_data = pd.read_csv(self.data_test_trans_path)
+
 
     def merge_csv_data(self) -> DataFrame:
         '''
@@ -25,6 +31,11 @@ class Data:
         df = pd.merge(self.train_trans_data, self.train_id_data, how="left", on="TransactionID") # left (trans) = dominant df, transaction id = identifier
         self.df = df
         return df
+
+    def merge_csv_test_data(self):
+        df = pd.merge(self.test_trans_data, self.test_id_data, how="left", on="TransactionID")
+        df.columns = df.columns.str.replace('-', '_')
+        self.df = df
 
     def perform_feature_engineering(self):
 
@@ -63,16 +74,25 @@ class Data:
 
         def label_encoding():
             '''
-            This helper method transforms all str columns into numeric values.
+            This helper method performs label encoding on all our string columns.
             We keep the NaN columns and do not map those to a dedicated number. 
             '''
-            le = LabelEncoder() # init LabelEncoder
+            cat_cols = self.df.select_dtypes(include="str").columns
 
-            cat_cols = self.df.select_dtypes(include="str").columns # select all columns with string instead of numeric values
-            for col in cat_cols: # loop over each string column
-                mask = self.df[col].notna() # Series of boolean values (for NaN = false, rest = True)
-                encoded = pd.Series(index=self.df.index, dtype="float64") # create new, empty series requiring float as type with the number of rows (df.index). Base Value = NaN
-                encoded[mask] = le.fit_transform(self.df.loc[mask, col]) #encoded[mask]= only change index values of mask, leave rest.  df.loc[mask, col] = only take rows where mask = True, only take this column
+            for col in cat_cols:
+                mask = self.df[col].notna()
+
+                if col not in self.label_encoders:
+                    le = LabelEncoder()
+                    le.fit(self.df.loc[mask, col])
+                    self.label_encoders[col] = le
+
+                le = self.label_encoders[col]
+                encoded = pd.Series(index=self.df.index, dtype="float64")
+                known = set(le.classes_)
+                safe_mask = mask & self.df[col].isin(known)
+                encoded[safe_mask] = le.transform(self.df.loc[safe_mask, col])
+                encoded[mask & ~self.df[col].isin(known)] = -1
                 self.df[col] = encoded
 
         group_emails()
@@ -108,11 +128,17 @@ class Data:
         self.X_test = X_test
         self.y_test = y_test
 
-    def prepare_data(self):
+    def prepare_data(self, test_data: bool = False):
         self.load_csv_data()
-        self.merge_csv_data()
 
+        self.merge_csv_data()
         self.perform_feature_engineering()
         self.split_data()
+        self.train_columns = self.X_train.columns.tolist()
 
-        return self.X_train, self.X_val, self.X_test, self.y_train, self.y_val, self.y_test
+        if test_data:
+            self.merge_csv_test_data()
+            self.perform_feature_engineering()
+            return self.df.reindex(columns=self.train_columns, fill_value=0)
+        else:
+            return self.X_train, self.X_val, self.X_test, self.y_train, self.y_val, self.y_test
