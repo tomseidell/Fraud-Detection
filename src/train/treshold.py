@@ -16,7 +16,7 @@ The sweetspot here the treshold 0.0750 (0.585209 Precision, 0.822201 Recall)
 
 
 # load best parameter according to HyperParameter tuning
-with open(Path(__file__).resolve().parents[2] / "src" / "models" / "best_params.json", "r") as f:
+with open(Path(__file__).resolve().parents[2] / "src" / "models" / "xgb" / "best_params.json", "r") as f:
     best_params = json.load(f)
 
 

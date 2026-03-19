@@ -51,5 +51,5 @@ print(f"Best ROC-AUC: {study.best_value:.4f}")
 print(f"Best Params: {study.best_params}")
 
 # save model params in json fle
-with open("../../models/best_params.json", "w") as f:
+with open("../../models/xgb/best_params.json", "w") as f:
     json.dump(study.best_params, f, indent=4) 
