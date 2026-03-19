@@ -31,6 +31,7 @@ secrets.py
 
 # exclude model from git 
 xgboost_final.json
+pipeline.pkl
 
 todos.md
 
