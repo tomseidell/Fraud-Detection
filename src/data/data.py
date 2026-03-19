@@ -15,17 +15,16 @@ class Data:
 
     def load_csv_data(self):
         '''
-        This function loads both our dataset files and saves them as class variables
+        This function loads both our dataset files for train and test and saves them as class variables
         '''
         self.train_id_data = pd.read_csv(self.data_train_id_path)
         self.train_trans_data = pd.read_csv(self.data_train_trans_path)
         self.test_id_data = pd.read_csv(self.data_test_id_path)
         self.test_trans_data = pd.read_csv(self.data_test_trans_path)
 
-
     def merge_csv_data(self) -> DataFrame:
         '''
-        This merges both datasets loaded above
+        This method merges both train datasets together
         '''
 
         df = pd.merge(self.train_trans_data, self.train_id_data, how="left", on="TransactionID") # left (trans) = dominant df, transaction id = identifier
@@ -33,8 +32,11 @@ class Data:
         return df
 
     def merge_csv_test_data(self):
+        '''
+        This method merges both test datasets together
+        '''
         df = pd.merge(self.test_trans_data, self.test_id_data, how="left", on="TransactionID")
-        df.columns = df.columns.str.replace('-', '_')
+        df.columns = df.columns.str.replace('-', '_') # column names differ from train columns. Make them have equal names
         self.df = df
 
     def perform_feature_engineering(self):
@@ -72,29 +74,6 @@ class Data:
 
             self.df = self.df.drop(["DT_day", "TransactionDT"], axis=1)
 
-        def label_encoding():
-            '''
-            This helper method performs label encoding on all our string columns.
-            We keep the NaN columns and do not map those to a dedicated number. 
-            '''
-            cat_cols = self.df.select_dtypes(include="str").columns
-
-            for col in cat_cols:
-                mask = self.df[col].notna()
-
-                if col not in self.label_encoders:
-                    le = LabelEncoder()
-                    le.fit(self.df.loc[mask, col])
-                    self.label_encoders[col] = le
-
-                le = self.label_encoders[col]
-                encoded = pd.Series(index=self.df.index, dtype="float64")
-                known = set(le.classes_)
-                safe_mask = mask & self.df[col].isin(known)
-                encoded[safe_mask] = le.transform(self.df.loc[safe_mask, col])
-                encoded[mask & ~self.df[col].isin(known)] = -1
-                self.df[col] = encoded
-
         group_emails()
 
         one_hot_encoding_helper(column="ProductCD", prefix="ProductCD")
@@ -104,7 +83,6 @@ class Data:
 
         time_column_transformer()
 
-        label_encoding()
     
     def split_data(self):
         '''
@@ -129,6 +107,9 @@ class Data:
         self.y_test = y_test
 
     def prepare_data(self, test_data: bool = False):
+        """
+        performs feature loading, merging and transforming for both train and test data
+        """
         self.load_csv_data()
 
         self.merge_csv_data()
@@ -136,9 +117,9 @@ class Data:
         self.split_data()
         self.train_columns = self.X_train.columns.tolist()
 
-        if test_data:
+        if test_data: 
             self.merge_csv_test_data()
             self.perform_feature_engineering()
-            return self.df.reindex(columns=self.train_columns, fill_value=0)
+            return self.df.reindex(columns=self.train_columns, fill_value=0) # reorder column sequence, to match train data
         else:
             return self.X_train, self.X_val, self.X_test, self.y_train, self.y_val, self.y_test
