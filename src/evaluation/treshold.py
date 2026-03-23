@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from src.evaluation.evaluation_metrics import EvaluationMetrics
-from src.data.data import Data
+from src.data.loader import Data
 import json
 import pandas as pd
 

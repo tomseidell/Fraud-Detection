@@ -3,7 +3,7 @@ from xgboost import XGBClassifier
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-from src.data.data import Data
+from src.data.loader import Data
 from sklearn.model_selection import cross_val_score
 import json
 
