@@ -6,6 +6,10 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import OrdinalEncoder
 
 class DropColumnsTransformer(BaseEstimator, TransformerMixin):
+    """
+    This class drops given columns from our dataset.
+    This removes noise and helps the model to improve.
+    """
 
     def __init__(self, columns: list[str]):
         self.columns = columns
@@ -18,6 +22,11 @@ class DropColumnsTransformer(BaseEstimator, TransformerMixin):
 
 
 class EmailTransformer(BaseEstimator, TransformerMixin):
+    """
+    This class encodes the "R_emaildomain" column to numbers 1-6.
+    It extracts the 5 most used emails from the train sets and assigns 
+    a number (1-5) to each. Each other email will be represented by the number 6
+    """
 
     def fit(self, X:DataFrame, y=None) -> Self:
         top5_email_categories = X["R_emaildomain"].value_counts().head(5)
@@ -34,6 +43,12 @@ class EmailTransformer(BaseEstimator, TransformerMixin):
     
 
 class OHETransformer(BaseEstimator, TransformerMixin):
+    """
+    This class receives an array of columns which should be one hot encoded.
+    The columns are being saved in the fit step and afterwards used in tranform.
+    If a new value is being seen in transform, that does not belong to any of the columns
+    saved in the class, all created columns will have the value 0
+    """
 
     def __init__(self, columns: list[str]):
         self.columns = columns
@@ -56,6 +71,9 @@ class OHETransformer(BaseEstimator, TransformerMixin):
 
 
 class TimeTransformer(BaseEstimator, TransformerMixin):
+    """
+    This class transforms multiple time related columns with a static formula.
+    """
 
     def fit(self, X: DataFrame, y=None) -> Self:
         return self 
