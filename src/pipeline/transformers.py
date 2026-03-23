@@ -27,18 +27,25 @@ class EmailTransformer(BaseEstimator, TransformerMixin):
     It extracts the 5 most used emails from the train sets and assigns 
     a number (1-5) to each. Each other email will be represented by the number 6
     """
-
-    def fit(self, X:DataFrame, y=None) -> Self:
-        top5_email_categories = X["R_emaildomain"].value_counts().head(5)
-
-        self.email_mapper_ = {} # save domain and domain specific number (1-5)
-        for i, domain in enumerate(top5_email_categories.index.tolist()):
-            self.email_mapper_[domain] = i+1
-        return self
     
-    def transform(self, X:DataFrame) -> DataFrame:
+    def __init__(self, number_of_mail_provider: int):
+        self.number_of_mail_provider = number_of_mail_provider
+        self.email_cols = ["R_emaildomain", "P_emaildomain"]
+
+    def fit(self, X, y=None):
+        self.email_mappers_ = {}
+        for col in self.email_cols:
+            if col not in X.columns:
+                continue
+            top_n = X[col].value_counts().head(self.number_of_mail_provider)
+            # create nested object containing all n email domains for column 
+            self.email_mappers_[col] = {domain: i+1 for i, domain in enumerate(top_n.index)}
+        return self
+
+    def transform(self, X):
         X = X.copy()
-        X["R_emaildomain"] = X["R_emaildomain"].map(self.email_mapper_).fillna(6).astype(int)
+        for col, mapper in self.email_mappers_.items():
+            X[col] = X[col].map(mapper).fillna(len(mapper) + 1).astype(int)
         return X
     
 

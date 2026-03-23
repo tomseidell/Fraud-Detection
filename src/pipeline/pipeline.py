@@ -13,11 +13,11 @@ DROP_COLS = ["TransactionID"]
 
 
 
-def build_pipeline(params:dict) -> Pipeline:
+def build_pipeline(params:dict, drop_cols:list[str] = DROP_COLS, number_of_mail_provider: int = 5) -> Pipeline:
     return Pipeline([
-        ("drop", DropColumnsTransformer(columns=DROP_COLS)),
+        ("drop", DropColumnsTransformer(columns=drop_cols)),
         ("time", TimeTransformer()),
-        ("email", EmailTransformer()),
+        ("email", EmailTransformer(number_of_mail_provider=number_of_mail_provider)),
         ("ohe", OHETransformer(columns=OHE_COLS)),
         ("ordinal", OrdinalTransformer()),
         ("model", XGBClassifier(**params))
