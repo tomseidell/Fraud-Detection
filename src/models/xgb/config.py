@@ -3,7 +3,7 @@ from src.data.splitter import split_data
 from src.pipeline.pipeline import OHE_COLS
 
 BASE_COLS = ["TransactionID"]
-PROTECTED_COLS = OHE_COLS + ["R_emaildomain"]
+PROTECTED_COLS = OHE_COLS + ["R_emaildomain", "P_emaildomain"]
 
 loader = Loader().load()
 X_train, _, _, _ = split_data(loader.df)
