@@ -38,7 +38,8 @@ def objective(trial):
         # hardcoded:
         "random_state" : 42, 
         "scale_pos_weight": scale_pos_weight,
-        "early_stopping_rounds" : 5
+        "early_stopping_rounds" : 5,
+        "eval_metric" : "auc"
     }
 
     """ 
