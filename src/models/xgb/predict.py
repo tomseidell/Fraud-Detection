@@ -17,7 +17,9 @@ def predict():
     loader = Loader().load(include_test=True)
 
     X_test = loader.test_df
-    transaction_ids = X_test["TransactionID"].copy()
+
+    # save transaction id to local variable because it is being dropped in pipeline
+    transaction_ids = X_test["TransactionID"].copy() 
 
     pipeline:Pipeline = joblib.load(filename=MODEL_PATH)
     y_pred = pipeline.predict_proba(X_test)[:,1]
@@ -26,7 +28,7 @@ def predict():
         "TransactionID": transaction_ids,
         "isFraud": y_pred
     })
-
+    
     submission.to_csv(SUBMISSION_FILE_PATH, index=False)
 
 
