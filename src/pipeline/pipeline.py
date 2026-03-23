@@ -1,5 +1,3 @@
-import json
-from pathlib import Path
 from xgboost import XGBClassifier
 from sklearn.pipeline import Pipeline
 from src.pipeline.transformers import (

@@ -2,7 +2,7 @@ import json, joblib
 from pathlib import Path
 import sys
 
-ROOT = Path(__file__).resolve().parents[3]  # xgb → models → src → fraud-detection
+ROOT = Path(__file__).resolve().parents[3] 
 sys.path.insert(0, str(ROOT))
 
 from src.data.loader import Loader
@@ -22,7 +22,7 @@ def train():
     pipeline = build_pipeline(params)
     pipeline.fit(X_train, y_train)
 
-    joblib.dump(pipeline, MODEL_PATH)
+    joblib.dump(pipeline, MODEL_PATH) # save model to given path
     print(f"Model saved to {MODEL_PATH}")
 
 
