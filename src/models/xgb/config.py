@@ -16,3 +16,11 @@ DROP_VARIANTS = {
     "drop_85": BASE_COLS + [c for c in missing[missing > 0.85].index if c not in PROTECTED_COLS],
     "drop_75": BASE_COLS + [c for c in missing[missing > 0.75].index if c not in PROTECTED_COLS],
 }
+
+
+UID_VARIANTS = {
+    "card1_only": ["card1"],
+    "card1_addr1": ["card1", "addr1"],
+    "card1_addr1_d1": ["card1", "addr1", "D1"],
+    "card1_card6_card4_email": ["card1", "card6", "card4", "P_emaildomain"]
+}
