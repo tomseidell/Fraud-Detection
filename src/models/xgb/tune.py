@@ -7,13 +7,19 @@ from src.pipeline.pipeline import build_pipeline
 from src.data.loader import Loader
 from src.data.splitter import split_data
 from src.models.xgb.config import DROP_VARIANTS
+from xgboost import XGBClassifier
 import json
+from utils.log_experiment import log_experiment
 
 """
 In this file we will perform HyperParameter Tuning. In this case we decided to use optuna instead of GridSearch, to save time.
 We are optimizing based on the ROC-AUC Metric and want to maximise this. The best parameters found by the algorithm, will 
 be saved as a json file in the models folder
 """
+
+
+EXPERIMENT_NAME = "v1"  
+ADDITIONAL_COMMENTS = ""
 
 
 PARAMS_PATH = Path(__file__).resolve().parent / "best_params.json"
@@ -59,7 +65,7 @@ def objective(trial):
     X_train_transformed = preprocessor.fit_transform(X_train, y_train)
     X_test_transformed  = preprocessor.transform(X_test)
 
-    model = pipeline[-1]
+    model: XGBClassifier = pipeline[-1]
     model.fit(
         X_train_transformed, y_train,
         eval_set=[(X_test_transformed, y_test)],
@@ -98,6 +104,8 @@ pipeline_params = {
 }
 
 print("pipeline_params: ",pipeline_params)
+
+log_experiment(experiment_name=EXPERIMENT_NAME, study=study, additional_comments=ADDITIONAL_COMMENTS)
 
 with open(PARAMS_PATH, "w") as f:
     json.dump(model_params, f, indent=4)
