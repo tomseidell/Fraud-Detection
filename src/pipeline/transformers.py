@@ -158,3 +158,17 @@ class UidTransformer(BaseEstimator, TransformerMixin):
             X["uid"] += "_" + X[col].fillna("unknown").astype(str)
         
         return X
+    
+class AmountTransformer(BaseEstimator, TransformerMixin):
+    def fit(self, X: DataFrame, y=None) -> Self:
+        return self 
+    
+    def transform(self, X: DataFrame) -> DataFrame:
+        X = X.copy()
+
+        X["Trans_amt_dollar"] = X["TransactionAmt"].round(2)
+        X["Trans_amt_cents"]  = (X["TransactionAmt"] % 1 * 100).round(0).astype(int)
+        X["Trans_amt_log"]    = np.log1p(X["TransactionAmt"])
+        X["Trans_amt_isround"] = (X["TransactionAmt"] % 1 == 0).astype(int)
+
+        return X
