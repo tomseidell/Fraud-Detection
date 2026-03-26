@@ -25,7 +25,7 @@ def train():
     X_train, X_test, y_train, y_test = split_data(loader.df)
 
     pipeline = build_pipeline(params, drop_cols=DROP_VARIANTS[pipeline_params["drop_variant"]], number_of_mail_provider=pipeline_params["email_top_n"])
-    preprocessor = pipeline[:-1]
+    preprocessor = pipeline[:-1] # exclude last item in pipeline (model)
     X_train_transformed = preprocessor.fit_transform(X_train, y_train)
     X_test_transformed  = preprocessor.transform(X_test)
 

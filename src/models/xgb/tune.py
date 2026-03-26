@@ -55,19 +55,18 @@ def objective(trial):
     # build pipeline dynamically with combinations of model params and pipeline params
     pipeline = build_pipeline(params=model_params, drop_cols=DROP_VARIANTS[drop_variant], number_of_mail_provider=number_of_mail_provider) 
 
-    # preprocess the dataset separately from fitting, because we added early stopping, which requires eval set 
     preprocessor = pipeline[:-1]
     X_train_transformed = preprocessor.fit_transform(X_train, y_train)
     X_test_transformed  = preprocessor.transform(X_test)
 
-    model = pipeline.named_steps["model"]
+    model = pipeline[-1]
     model.fit(
         X_train_transformed, y_train,
         eval_set=[(X_test_transformed, y_test)],
         verbose=False
     )
      
-    # calculatr roc score for specific param combination
+    # calculate roc score for specific param combination
     score = roc_auc_score(y_test, model.predict_proba(X_test_transformed)[:, 1])
 
     return score
