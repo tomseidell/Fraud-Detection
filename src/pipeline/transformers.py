@@ -123,3 +123,38 @@ class OrdinalTransformer(BaseEstimator, TransformerMixin):
         X = X.copy()
         X[self.obj_cols_] = self.encoder_.transform(X[self.obj_cols_])
         return X
+    
+
+class FrequencyTransformer(BaseEstimator, TransformerMixin):
+    def __init__(self, columns=list[str]):
+        self.columns = columns
+        self.freq_map = {}
+
+    def fit(self, X: DataFrame, y=None) -> Self:
+        for col in self.columns:
+            self.freq_map[col] = X[col].value_counts(normalize=True).to_dict()
+        return self
+    
+    def transform(self, X:DataFrame) ->DataFrame:
+        X = X.copy()
+        for col in self.columns:
+            X[col] = X[col].map(self.freq_map[col])
+        return X
+
+
+class UidTransformer(BaseEstimator, TransformerMixin):
+    def __init__(self, columns: list[str]):
+        self.columns = columns
+
+    def fit(self, X: DataFrame, y=None) -> Self:
+        return self  
+
+    def transform(self, X: DataFrame) -> DataFrame:
+        X = X.copy()
+        
+        X["uid"] = X[self.columns[0]].astype(str)
+        
+        for col in self.columns[1:]:
+            X["uid"] += "_" + X[col].fillna("unknown").astype(str)
+        
+        return X
