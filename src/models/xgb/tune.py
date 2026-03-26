@@ -6,7 +6,7 @@ from sklearn.metrics import roc_auc_score
 from src.pipeline.pipeline import build_pipeline
 from src.data.loader import Loader
 from src.data.splitter import split_data
-from src.models.xgb.config import DROP_VARIANTS
+from src.models.xgb.config import DROP_VARIANTS, UID_VARIANTS
 from xgboost import XGBClassifier
 import json
 from utils.log_experiment import log_experiment
@@ -44,22 +44,21 @@ def objective(trial):
         # hardcoded:
         "random_state" : 42, 
         "scale_pos_weight": scale_pos_weight,
-        "early_stopping_rounds" : 5,
+        "early_stopping_rounds" : 20,
         "eval_metric" : "auc"
     }
 
     """ 
     use optuna to improve parameter for feature engineering steps.
     - drop_variant = array of columns the pipeline drops during feature engineering
-    - number_of_mail_provider = test all numbers from 3-10 and decide on best amount 
-      of emaildomains for cols: R_emaildomain" and "P_emaildomain
+    - uid_variant = test 4 possible combinations for uid approximation
     """
     drop_variant   = trial.suggest_categorical("drop_variant", list(DROP_VARIANTS.keys()))
-    number_of_mail_provider    = trial.suggest_int("email_top_n", 3, 10)
+    uid_variant = trial.suggest_categorical("uid_variant", list(UID_VARIANTS.keys()))
 
 
     # build pipeline dynamically with combinations of model params and pipeline params
-    pipeline = build_pipeline(params=model_params, drop_cols=DROP_VARIANTS[drop_variant], number_of_mail_provider=number_of_mail_provider) 
+    pipeline = build_pipeline(params=model_params, drop_cols=DROP_VARIANTS[drop_variant], uid_cols=UID_VARIANTS[uid_variant]) 
 
     preprocessor = pipeline[:-1]
     X_train_transformed = preprocessor.fit_transform(X_train, y_train)
@@ -95,6 +94,8 @@ model_params = {
 # add hardcoded values because .best_value does not return hardcoded values
 model_params["scale_pos_weight"] = scale_pos_weight
 model_params["random_state"] = 42
+model_params["early_stopping_rounds"] = 5
+model_params["eval_metric"] = "auc"
 
 print("model_params: ", model_params)
 
