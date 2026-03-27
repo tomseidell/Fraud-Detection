@@ -4,6 +4,7 @@ from pandas import DataFrame
 from typing import Self
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import OrdinalEncoder
+from sklearn.decomposition import PCA
 
 class DropColumnsTransformer(BaseEstimator, TransformerMixin):
     """
@@ -126,40 +127,61 @@ class OrdinalTransformer(BaseEstimator, TransformerMixin):
     
 
 class FrequencyTransformer(BaseEstimator, TransformerMixin):
+    """
+    This class performs frequency encoding to columns with high cardinality.
+    """
+
     def __init__(self, columns=list[str]):
         self.columns = columns
         self.freq_map = {}
 
     def fit(self, X: DataFrame, y=None) -> Self:
         for col in self.columns:
+            if col not in X.columns:  # ← Fix
+                continue
             self.freq_map[col] = X[col].value_counts(normalize=True).to_dict()
         return self
     
-    def transform(self, X:DataFrame) ->DataFrame:
+    def transform(self, X: DataFrame) -> DataFrame:
         X = X.copy()
-        for col in self.columns:
+        for col in self.freq_map:   
+            if col not in X.columns:
+                continue
             X[col] = X[col].map(self.freq_map[col])
         return X
 
 
 class UidTransformer(BaseEstimator, TransformerMixin):
+    """
+    This class creates a single uid, which should approximate an individual user identifier.
+    The uid is been dynamically created based on the columns which are being passed.
+    """
+
     def __init__(self, columns: list[str]):
         self.columns = columns
 
     def fit(self, X: DataFrame, y=None) -> Self:
-        return self  
+        X = X.copy()
+        uid = X[self.columns[0]].astype(str)
+        for col in self.columns[1:]:
+            uid += "_" + X[col].fillna("unknown").astype(str)
+        self.uid_freq_ = uid.value_counts(normalize=True).to_dict()
+        return self
 
     def transform(self, X: DataFrame) -> DataFrame:
         X = X.copy()
-        
-        X["uid"] = X[self.columns[0]].astype(str)
-        
+        uid = X[self.columns[0]].astype(str)
         for col in self.columns[1:]:
-            X["uid"] += "_" + X[col].fillna("unknown").astype(str)
-        
+            uid += "_" + X[col].fillna("unknown").astype(str)
+        X["uid"] = uid.map(self.uid_freq_).fillna(0).astype(float)
         return X
+
     
 class AmountTransformer(BaseEstimator, TransformerMixin):
+    """
+    This class splits the TransactionAmt column into 4 new columns
+    """
+
     def fit(self, X: DataFrame, y=None) -> Self:
         return self 
     
@@ -171,4 +193,28 @@ class AmountTransformer(BaseEstimator, TransformerMixin):
         X["Trans_amt_log"]    = np.log1p(X["TransactionAmt"])
         X["Trans_amt_isround"] = (X["TransactionAmt"] % 1 == 0).astype(int)
 
+        return X
+
+
+class PCATransformer(BaseEstimator, TransformerMixin):
+    """
+    This class performs PCA on the V columns (300+) of our dataset.
+    The amount of components in the PCA are being dynamically defined as an input.
+    """
+
+    def __init__(self, n_components: int):
+        self.n_components = n_components
+
+    def fit(self, X: DataFrame, y=None) -> Self:
+        self.v_cols = [col for col in X.columns if col.startswith("V")]
+        self.pca = PCA(n_components=self.n_components)  
+        self.pca.fit(X[self.v_cols].fillna(0))
+        return self
+    
+    def transform(self, X: DataFrame) -> DataFrame:
+        X = X.copy()
+        pca_result = self.pca.transform(X[self.v_cols].fillna(0))
+        for i in range(self.n_components):
+            X[f"V_pca_{i+1}"] = pca_result[:, i]
+        X = X.drop(columns=self.v_cols)
         return X
