@@ -30,7 +30,7 @@ def predict():
     })
     
     submission.to_csv(SUBMISSION_FILE_PATH, index=False)
-
+    print("submission saved to csv")
 
 if __name__ == "__main__":
     predict()
