@@ -1,13 +1,16 @@
 {
-    "max_depth": 11,
+    "max_depth": 8,
     "learning_rate": 0.004607358754685534,
     "n_estimators": 3120,
-    "subsample": 0.48324896981686266,
+    "subsample": 0.5,
     "colsample_bytree": 0.9725091749831701,
     "min_child_weight": 40,
-    "gamma": 4.494526858435924,
+    "gamma": 5,
+    "reg_alpha": 1.0,
+    "reg_lambda": 5.0,
     "scale_pos_weight": 27.46147358274595,
     "random_state": 42,
-    "early_stopping_rounds": 20,
-    "eval_metric": "auc"
+    "early_stopping_rounds": 28,
+    "eval_metric": "auc",
+    "tree_method": "hist"
 }
