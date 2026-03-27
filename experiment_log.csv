@@ -1,3 +1,4 @@
 experiment,best_roc_auc,n_trials,additional_comments,max_depth,learning_rate,n_estimators,subsample,colsample_bytree,min_child_weight,gamma,drop_variant,uid_variant,pca_n_components
 v1,0.9227,50,,11,0.004607358754685534,3120,0.48324896981686266,0.9725091749831701,40,4.494526858435924,drop_85,card1_addr1,3
 v2_manual,0.9201,manual,"added reg_alpha=1.0 and reg_lambda=5.0 for regularization",9,0.03,2500,0.5,0.5,40,5,drop_85,card1_addr1,3
+v3_manual,0.9195,manual,,8,0.004607358754685534,3120,0.5,0.9725091749831701,40,5,drop_85,card1_addr1,3
