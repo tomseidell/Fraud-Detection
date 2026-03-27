@@ -11,6 +11,7 @@ from xgboost import XGBClassifier
 import json
 from utils.log_experiment import log_experiment
 
+
 """
 In this file we will perform HyperParameter Tuning. In this case we decided to use optuna instead of GridSearch, to save time.
 We are optimizing based on the ROC-AUC Metric and want to maximise this. The best parameters found by the algorithm, will 
@@ -32,81 +33,89 @@ scale_pos_weight = (y_train == 0).sum() / (y_train == 1).sum()
 
 
 def objective(trial):
-    # define lower and upper border for each parameter of xgboost
     model_params = {
-        'max_depth': trial.suggest_int('max_depth', 3, 7),
-        'learning_rate': trial.suggest_float('learning_rate', 0.01, 0.1),
-        'n_estimators': trial.suggest_int('n_estimators', 100, 1000), # number of trees in ensemble
-        'subsample': trial.suggest_float('subsample', 0.5, 0.8), # train individual tree on x percent of all the data
-        'colsample_bytree': trial.suggest_float('colsample_bytree', 0.5, 0.8), # train individual tree on x percent of all features
-        'min_child_weight': trial.suggest_int('min_child_weight', 5, 20), # min number of childs for new split
-        'gamma': trial.suggest_float('gamma', 1, 10), # regularization size
-        # hardcoded:
-        "random_state" : 42, 
+        'max_depth': trial.suggest_int('max_depth', 4, 14),
+        'learning_rate': trial.suggest_float('learning_rate', 0.001, 0.1, log=True),
+        'n_estimators': trial.suggest_int('n_estimators', 100, 5000),
+        'subsample': trial.suggest_float('subsample', 0.3, 1.0),
+        'colsample_bytree': trial.suggest_float('colsample_bytree', 0.3, 1.0),
+        'min_child_weight': trial.suggest_int('min_child_weight', 1, 50),
+        'gamma': trial.suggest_float('gamma', 0, 10),
+        "random_state": 42,
         "scale_pos_weight": scale_pos_weight,
-        "early_stopping_rounds" : 20,
-        "eval_metric" : "auc"
+        "early_stopping_rounds": 20,
+        "eval_metric": "auc",
+        "tree_method": "hist",
     }
 
-    """ 
-    use optuna to improve parameter for feature engineering steps.
-    - drop_variant = array of columns the pipeline drops during feature engineering
-    - uid_variant = test 4 possible combinations for uid approximation
-    """
-    drop_variant   = trial.suggest_categorical("drop_variant", list(DROP_VARIANTS.keys()))
+    drop_variant = trial.suggest_categorical("drop_variant", list(DROP_VARIANTS.keys()))
     uid_variant = trial.suggest_categorical("uid_variant", list(UID_VARIANTS.keys()))
+    n_components_pca = trial.suggest_int("pca_n_components", 3, 10)
 
-
-    # build pipeline dynamically with combinations of model params and pipeline params
-    pipeline = build_pipeline(params=model_params, drop_cols=DROP_VARIANTS[drop_variant], uid_cols=UID_VARIANTS[uid_variant]) 
-
-    preprocessor = pipeline[:-1]
-    X_train_transformed = preprocessor.fit_transform(X_train, y_train)
-    X_test_transformed  = preprocessor.transform(X_test)
-
-    model: XGBClassifier = pipeline[-1]
-    model.fit(
-        X_train_transformed, y_train,
-        eval_set=[(X_test_transformed, y_test)],
-        verbose=False
+    pipeline = build_pipeline(
+        params=model_params,
+        drop_cols=DROP_VARIANTS[drop_variant],
+        uid_cols=UID_VARIANTS[uid_variant],
+        n_components=n_components_pca,
     )
-     
-    # calculate roc score for specific param combination
-    score = roc_auc_score(y_test, model.predict_proba(X_test_transformed)[:, 1])
 
+    # save each pipeline step and exclude model (last in pipeline)
+    steps = pipeline.steps[:-1]  
+
+    # to avoid skl errors we perform every step of the pipeline autonomosly 
+    Xt_train = X_train.copy()
+    for name, step in steps:
+        Xt_train = step.fit_transform(Xt_train, y_train)
+
+    Xt_test = X_test.copy()
+    for name, step in steps:
+        Xt_test = step.transform(Xt_test)
+
+    model = XGBClassifier(**model_params)
+    model.fit(
+        Xt_train, y_train,
+        eval_set=[(Xt_test, y_test)],
+        verbose=False,
+    )
+
+    # evalutaion score, roc value based on test set 
+    score = roc_auc_score(y_test, model.predict_proba(Xt_test)[:, 1])
     return score
 
-# remove optuna logs from console
+
 optuna.logging.set_verbosity(optuna.logging.WARNING)
 
-study = optuna.create_study(direction="maximize") # maximize score value
-study.optimize(objective, n_trials=50) # n_trials = number of trials -- trial amount of new parameters
+study = optuna.create_study(direction="maximize")
+study.optimize(objective, n_trials=50)
 
 print(f"Best ROC-AUC: {study.best_value:.4f}")
-
 
 best_trial = study.best_trial
 
 model_params = {
     k: v for k, v in best_trial.params.items()
-    if k not in ("drop_variant", "email_top_n")
+    if k not in ("drop_variant", "uid_variant", "pca_n_components")
 }
-# add hardcoded values because .best_value does not return hardcoded values
+
 model_params["scale_pos_weight"] = scale_pos_weight
 model_params["random_state"] = 42
-model_params["early_stopping_rounds"] = 5
+model_params["early_stopping_rounds"] = 20
 model_params["eval_metric"] = "auc"
 
 print("model_params: ", model_params)
 
 pipeline_params = {
     "drop_variant": best_trial.params["drop_variant"],
-    "email_top_n":  best_trial.params["email_top_n"],
+    "uid_variant": best_trial.params["uid_variant"],
+    "pca_n_components": best_trial.params["pca_n_components"],
 }
 
-print("pipeline_params: ",pipeline_params)
+print("pipeline_params: ", pipeline_params)
 
+# add new row entry to csv (experiment tracker)
 log_experiment(experiment_name=EXPERIMENT_NAME, study=study, additional_comments=ADDITIONAL_COMMENTS)
+
+# save model and pipeline params in separate json file
 
 with open(PARAMS_PATH, "w") as f:
     json.dump(model_params, f, indent=4)
