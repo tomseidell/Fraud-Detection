@@ -70,3 +70,47 @@ If you do not use `uv`, install dependencies from `pyproject.toml` with your pre
   `python -m src.models.xgb.predict`
 
 Generated artifacts are stored in `src/models/xgb/` (for example `pipeline.pkl` and `submission.csv`).
+
+## Results
+
+Best run so far: `v1` (tracked in `experiment_log.csv`)
+
+- Validation ROC-AUC: `0.9227`
+- Number of trials: `50`
+- Model params source: `src/models/xgb/best_params.json`
+- Pipeline params source: `src/models/xgb/best_pipeline_params.json`
+- Kaggle public score (submission): `0.894617`
+- Kaggle private score (submission): `0.921192`
+
+Best pipeline setup:
+
+- `drop_variant`: `drop_85`
+- `uid_variant`: `card1_addr1`
+- `pca_n_components`: `3`
+
+The gap between public and private leaderboard scores is expected in this competition setting and reflects distribution differences between leaderboard splits.
+
+## How to Reproduce
+
+1. Download the IEEE-CIS competition files from Kaggle and place them into `data/raw/`.
+2. Install dependencies:
+   ```bash
+   uv sync
+   ```
+3. (Optional) Re-run Optuna tuning:
+   ```bash
+   python -m src.models.xgb.tune
+   ```
+4. Train the final pipeline:
+   ```bash
+   python -m src.models.xgb.train
+   ```
+5. Create the submission file:
+   ```bash
+   python -m src.models.xgb.predict
+   ```
+
+Expected outputs:
+
+- Trained pipeline: `src/models/xgb/pipeline.pkl`
+- Kaggle submission: `src/models/xgb/submission.csv`

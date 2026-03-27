@@ -3,7 +3,7 @@ import random
 
 class RandomGuessing:
     """
-    This class represents a Modell, randomly guessing any number between 0-1 which then represent a probability
+    This class represents a Model, randomly guessing any number between 0-1 which then represent a probability
     of a given transaction being fraud
     """
 
