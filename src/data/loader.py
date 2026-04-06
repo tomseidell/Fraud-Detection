@@ -14,7 +14,7 @@ class Loader:
 
     def _load_csv_data(self):
         '''
-        This function loads both our dataset files for train and test and saves them as class variables
+        This method loads both our dataset files for train and test and saves them as class variables
         '''
         self.train_id_data = pd.read_csv(self.data_train_id_path)
         self.train_trans_data = pd.read_csv(self.data_train_trans_path)
