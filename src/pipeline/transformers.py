@@ -80,7 +80,9 @@ class OHETransformer(BaseEstimator, TransformerMixin):
 
 class TimeTransformer(BaseEstimator, TransformerMixin):
     """
-    This class transforms multiple time related columns with a static formula.
+    Derives time features from the raw TransactionDT (seconds offset) column.
+    Hour and weekday are encoded as sin/cos pairs to keep cyclic nature,
+    then the original column is dropped.
     """
 
     def fit(self, X: DataFrame, y=None) -> Self:
@@ -131,7 +133,7 @@ class FrequencyTransformer(BaseEstimator, TransformerMixin):
     This class performs frequency encoding to columns with high cardinality.
     """
 
-    def __init__(self, columns=list[str]):
+    def __init__(self, columns: list[str]):
         self.columns = columns
         self.freq_map = {}
 

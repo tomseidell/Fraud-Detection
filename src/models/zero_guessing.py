@@ -2,8 +2,8 @@ import numpy as np
 
 class ZeroGuessing:
     """
-    This class represents a Model, randomly guessing any number between 0-1 which then represent a probability
-    of a given transaction being fraud
+    Naive baseline that always predicts 0 (no fraud) for every transaction.
+    Useful as a lower-bound reference when comparing model performance.
     """
 
     def predict_one(self) -> int:
